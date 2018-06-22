@@ -401,7 +401,7 @@ function setup() { // p5.js setup
   for (var i = 0; i < 10; i ++) {
     connections.push(new connection(floor(random(gates.length)), floor(random(gates.length))));
   }
-  addPopup('press T for a tutorial, click anywhere to clise this message.')
+  addPopup('press T for a tutorial, click anywhere to close this message.')
 }
 
 var Wmouse = [0,0];
