@@ -6,10 +6,14 @@ var viewZoom = 1.0;
 var counter = 0; // loop counter counts ammountof times the main loop has been executed.
 var gates = []; // list that keeps all the gates.
 var connections = []; // list that keeps all the connections
+var popups = [];
 var typesF = []; // list tat stores all gate types with cumputation functions.
 var typesI = []; // list tat stores all gate types with images.
+var placingType = 0;
 var ticksToBeDone = 0;
 var ticksPerFrame = 1;
+var popupPadding = 10;
+var popupTextSize = 30;
 
 // connections*2 + gates < tickALgorithim complexity < connections*2 + gates * connections
 
@@ -53,6 +57,25 @@ function gate(initX, initY, type) {
     fill(0)
     textSize(size/2);
     text(this.gateType);
+  }
+}
+
+function popUp(x,y,xSize,ySize,popupText) {
+  this.xPos = x;
+  this.yPos = y;
+  this.xSize = xSize;
+  this.ySize = ySize;
+  this.popupText = popupText;
+  this.render = function() {
+    rectMode(CORNER);
+    stroke(255,255,255,255);
+    strokeWeight(5);
+    fill(0,0,0,227);
+    rect(this.xPos-popupPadding, this.yPos-popupPadding, this.xSize+popupPadding, this.ySize+popupPadding);
+    fill(255,255,255,255);
+    noStroke();
+    textSize(popupTextSize);
+    text(this.popupText, this.xPos, this.yPos, this.xSize, this.ySize);
   }
 }
 
@@ -169,8 +192,12 @@ function mousePressed() {
       selectDrags = 0;
     }
   } else if (mouseButton === LEFT){
-    dragging = true;
-    drags = 0;
+    if (popups.length >= 1) {
+      popups.splice(0,1);
+    } else {
+      dragging = true;
+      drags = 0;
+    }
   } else if (mouseButton === CENTER) {
     var isPressingGateRes = isPressingGate();
     if (isPressingGateRes[0] === true) {
@@ -216,7 +243,7 @@ function keyPressed() {
       gates[i].value = 0;
     }
   }
-  else if (keyCode === 88) {// x delete gate
+  else if (keyCode === 88 || keyCode === 8) {// x or backspace delete gate
     for (var i = 0; i < gates.length; i++) {
       if (gates[i].selected === true) {
         removeGate(i);
@@ -241,17 +268,28 @@ function keyPressed() {
     }
   }
   else if (keyCode === 70) { // f cycle type of selected gates
+    var selGateExists = false;
     for (var i = 0; i < gates.length; i++) {
       if (gates[i].selected === true) {
         gates[i].gateType += 1;
         if (gates[i].gateType >= typesF.length) {
           gates[i].gateType = 0;
         }
+        selGateExists = true;
+      }
+    }
+    if (!selGateExists) {
+      placingType += 1;
+      if (placingType >= typesI.length) {
+        placingType = 0;
       }
     }
   }
   else if (keyCode === 90) { // z newGate
     newGate();
+  }
+  else if (keyCode === 84) { // t tutorial.
+    tutorial();
   }
   // return false; // prevent any default behaviour
 }
@@ -269,7 +307,7 @@ function newGate() {
       return(false);
     }
   }
-  gates.push(new gate(round(Wmouse[0]/100)*100, round(Wmouse[1]/100)*100, 0));
+  gates.push(new gate(round(Wmouse[0]/100)*100, round(Wmouse[1]/100)*100, placingType));
   select(gates.length-1);
 }
 function doConnection(gate1, gate2) {
@@ -329,6 +367,29 @@ function selectDrag(startPos, endPos) {
     }
   }
 }
+function addPopup(popupText) {
+  var popupSize = sqrt(popupText.length*1.1)*popupTextSize/2;
+  if (popupSize*2 >= xScreenSize-20) {
+    popups.push(new popUp(10, 10, xScreenSize-20, yScreenSize-20, popupText));
+  } else {
+    popups.push(new popUp((xScreenSize/2)-popupSize, (yScreenSize/2)-popupSize, popupSize*2, popupSize*2, popupText));
+  }
+}
+function tutorial() {
+  addPopup('Welcome to the turotial for JSlogic. This tutorial is shown with many popups. If you want to close a popup / want to see the next popup, click anywhere on the screen.');
+  addPopup('Note that this program is not designed for mobile phones/tablets as many controls for editing the curcuit are dependent on a keyboard. Viewing an existing curcuit is still possible on all devises.');
+  addPopup('By left clicking you can close any popup or place a new gate. You can also use leftclick to press a button. By right clicking you can select/unselect a gate.');
+  addPopup('You can move the camera by dragging with the left mouse button and you can select/unselect an area by dragging with the right mouse button.');
+  addPopup('You can zoom by scrolling up and down (pinchng or CTRL-scrolling does not work).');
+  addPopup('You can delete a gate by middle-clicking on it or by first selecting it and then pressing X or BACKSPACE.');
+  addPopup('Press Z to place a new gate or press E to unselect everything');
+  addPopup('Press F to cycle the types of all selected gates (gates that are placed are selected by default). If no gates are selected, the default place gate will cycle instead.');
+  addPopup('Press Q to make a connection from the first selected gate to all other selected gates. You can always press Q again to undo this.');
+  addPopup('Press R to reset all gate states to 0/false/off or press T to view this tutorial again.');
+  addPopup('This is version Beta 1.1, changes and improvements are happening all the time.');
+  addPopup('Copy/pasting is coming soon, just like saving your curcuits and an undo option.');
+  addPopup('This program was made by: CodeMaker4');
+}
 
 function setup() { // p5.js setup
   createCanvas(xScreenSize, yScreenSize); // make new canvas to draw on
@@ -340,6 +401,7 @@ function setup() { // p5.js setup
   for (var i = 0; i < 10; i ++) {
     connections.push(new connection(floor(random(gates.length)), floor(random(gates.length))));
   }
+  addPopup('press T for a tutorial, click anywhere to clise this message.')
 }
 
 var Wmouse = [0,0];
@@ -355,21 +417,12 @@ function draw() { // main loop
 
 
   background(0); // set backgroun / delete old drawing
-  // menu interface
 
   translate((xScreenSize/2),(yScreenSize/2));
   scale(viewZoom);
   translate(viewX,viewY);
 
   renderAll();
-  // fill(255);
-  // ellipse(Wmouse[0],Wmouse[1], 100,100);
-
-  // fill(0,0,0,127);
-  // rect(-20,-20,40,40);
-  // ellipse(100,100,10,50);
-  // line(0,0,100,100);
-
 
   if (selecting === true) {
     fill(0,0,255,50);
@@ -379,10 +432,22 @@ function draw() { // main loop
     rect(selectingStart[0], selectingStart[1], Wmouse[0], Wmouse[1]);
   } else {
     rectMode(CENTER);
-    fill(0,0,0,0);
+    fill(0,50,0,100);
     stroke(127,127,127,100);
     strokeWeight(10);
     rect(round(Wmouse[0]/100)*100, round(Wmouse[1]/100)*100, 100, 100);
+    tint(255, 127);  // Display at half opacity
+    image(typesI[placingType], round(Wmouse[0]/100)*100, round(Wmouse[1]/100)*100, 100, 100);
+    tint(255, 255);  // Display at no opacity
+  }
+
+  translate(-viewX,-viewY);
+  scale(1/viewZoom);
+  translate(-(xScreenSize/2),-(yScreenSize/2));
+
+  // menu interface
+  for (var i = popups.length-1; i >= 0; i--) {
+    popups[i].render();
   }
 
   counter ++; // increment counter
