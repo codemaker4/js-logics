@@ -6,10 +6,12 @@ var viewZoom = 1.0;
 var counter = 0; // loop counter counts ammountof times the main loop has been executed.
 var gates = []; // list that keeps all the gates.
 var connections = []; // list that keeps all the connections
+var backup = [[],[]]; // list containing lists containng connections and gates before last action.
 var typesF = []; // list tat stores all gate types with cumputation functions.
 var typesI = []; // list tat stores all gate types with images.
 var ticksToBeDone = 0;
-var ticksPerFrame = 1;
+var ticksPerFrame = 1/3; // 20 tps (at 60 fps)
+var backupWasDone = false;
 
 // connections*2 + gates < tickALgorithim complexity < connections*2 + gates * connections
 
@@ -212,11 +214,12 @@ function onWorldMouse() {
 }
 function keyPressed() {
   if (keyCode === 82) { // r reset values
+    doBackup();
     for (var i = 0; i < gates.length; i++) {
       gates[i].value = 0;
     }
   }
-  else if (keyCode === 88) {// x delete gate
+  else if (keyCode === 88 || keyCode === 8) {// x or backspace delete gate
     for (var i = 0; i < gates.length; i++) {
       if (gates[i].selected === true) {
         removeGate(i);
@@ -226,6 +229,7 @@ function keyPressed() {
     firstSelected = undefined;
   }
   else if (keyCode === 69) { // e reset selection
+    doBackup();
     for (var i = 0; i < gates.length; i++) {
       gates[i].selected = false;
       firstSelected = undefined;
@@ -241,6 +245,7 @@ function keyPressed() {
     }
   }
   else if (keyCode === 70) { // f cycle type of selected gates
+    doBackup();
     for (var i = 0; i < gates.length; i++) {
       if (gates[i].selected === true) {
         gates[i].gateType += 1;
@@ -252,6 +257,9 @@ function keyPressed() {
   }
   else if (keyCode === 90) { // z newGate
     newGate();
+  }
+  else if (keyCode === 66) { // b loadBackup/undo
+    loadBackup();
   }
   // return false; // prevent any default behaviour
 }
@@ -269,6 +277,7 @@ function newGate() {
       return(false);
     }
   }
+  doBackup();
   gates.push(new gate(round(Wmouse[0]/100)*100, round(Wmouse[1]/100)*100, 0));
   select(gates.length-1);
 }
@@ -276,6 +285,7 @@ function doConnection(gate1, gate2) {
   if (gate1 === gate2) {
     return(false);
   }
+  doBackup();
   for (var i = 0; i < connections.length; i++) {
     if (connections[i].connectionStart === gate1 && connections[i].connectionEnd === gate2) {
       connections.splice(i,1);
@@ -289,6 +299,7 @@ function doConnection(gate1, gate2) {
   connections.push(new connection(gate1, gate2));
 }
 function removeGate(gateID) {
+  doBackup();
   for (var i = 0; i < connections.length; i++) {
     if (connections[i].connectionStart === gateID || connections[i].connectionEnd === gateID) {
       connections.splice(i,1);
@@ -329,6 +340,24 @@ function selectDrag(startPos, endPos) {
     }
   }
 }
+function doBackup() {
+  if (backupWasDone === false) {
+    console.log(connections);
+    backup = [[],[]];
+    backup[0] = gates.slice();
+    backup[1] = connections.slice();
+    console.log(backup[1]);
+    backupWasDone = true;
+  }
+}
+function loadBackup() {
+  var oldGates = gates.slice();
+  var oldConnections = connections.slice();
+  gates = backup[0].slice();
+  connections = backup[1].slice();
+  backup[0] = oldGates.slice();
+  backup[1] = oldConnections.slice();
+}
 
 function setup() { // p5.js setup
   createCanvas(xScreenSize, yScreenSize); // make new canvas to draw on
@@ -340,19 +369,20 @@ function setup() { // p5.js setup
   for (var i = 0; i < 10; i ++) {
     connections.push(new connection(floor(random(gates.length)), floor(random(gates.length))));
   }
+  doBackup();
 }
 
 var Wmouse = [0,0];
 
 function draw() { // main loop
   Wmouse = onWorldMouse();
+  backupWasDone = false;
 
   ticksToBeDone += ticksPerFrame;
   while (ticksToBeDone >= 1) {
     fullTick();
     ticksToBeDone -= 1;
   }
-
 
   background(0); // set backgroun / delete old drawing
   // menu interface
@@ -362,14 +392,6 @@ function draw() { // main loop
   translate(viewX,viewY);
 
   renderAll();
-  // fill(255);
-  // ellipse(Wmouse[0],Wmouse[1], 100,100);
-
-  // fill(0,0,0,127);
-  // rect(-20,-20,40,40);
-  // ellipse(100,100,10,50);
-  // line(0,0,100,100);
-
 
   if (selecting === true) {
     fill(0,0,255,50);
