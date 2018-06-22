@@ -9,7 +9,6 @@ var connections = []; // list that keeps all the connections
 var popups = [];
 var typesF = []; // list tat stores all gate types with cumputation functions.
 var typesI = []; // list tat stores all gate types with images.
-var placingType = 0;
 var ticksToBeDone = 0;
 var ticksPerFrame = 1/3; // 20 tps (at 60 fps)
 var popupPadding = 10;
@@ -268,20 +267,12 @@ function keyPressed() {
     }
   }
   else if (keyCode === 70) { // f cycle type of selected gates
-    var selGateExists = false;
     for (var i = 0; i < gates.length; i++) {
       if (gates[i].selected === true) {
         gates[i].gateType += 1;
         if (gates[i].gateType >= typesF.length) {
           gates[i].gateType = 0;
         }
-        selGateExists = true;
-      }
-    }
-    if (!selGateExists) {
-      placingType += 1;
-      if (placingType >= typesI.length) {
-        placingType = 0;
       }
     }
   }
@@ -307,7 +298,7 @@ function newGate() {
       return(false);
     }
   }
-  gates.push(new gate(round(Wmouse[0]/100)*100, round(Wmouse[1]/100)*100, placingType));
+  gates.push(new gate(round(Wmouse[0]/100)*100, round(Wmouse[1]/100)*100, 0));
   select(gates.length-1);
 }
 function doConnection(gate1, gate2) {
@@ -383,7 +374,7 @@ function tutorial() {
   addPopup('You can zoom by scrolling up and down (pinchng or CTRL-scrolling does not work).');
   addPopup('You can delete a gate by middle-clicking on it or by first selecting it and then pressing X or BACKSPACE.');
   addPopup('Press Z to place a new gate or press E to unselect everything');
-  addPopup('Press F to cycle the types of all selected gates (gates that are placed are selected by default). If no gates are selected, the default place gate will cycle instead.');
+  addPopup('Press F to cycle the types of all selected gates (gates that are placed are selected by default).');
   addPopup('Press Q to make a connection from the first selected gate to all other selected gates. You can always press Q again to undo this.');
   addPopup('Press R to reset all gate states to 0/false/off or press T to view this tutorial again.');
   addPopup('This is version Beta 1.1, changes and improvements are happening all the time.');
@@ -435,9 +426,6 @@ function draw() { // main loop
     stroke(127,127,127,100);
     strokeWeight(10);
     rect(round(Wmouse[0]/100)*100, round(Wmouse[1]/100)*100, 100, 100);
-    tint(255, 127);  // Display at half opacity
-    image(typesI[placingType], round(Wmouse[0]/100)*100, round(Wmouse[1]/100)*100, 100, 100);
-    tint(255, 255);  // Display at no opacity
   }
 
   translate(-viewX,-viewY);
