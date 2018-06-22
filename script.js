@@ -11,7 +11,7 @@ var typesF = []; // list tat stores all gate types with cumputation functions.
 var typesI = []; // list tat stores all gate types with images.
 var placingType = 0;
 var ticksToBeDone = 0;
-var ticksPerFrame = 1;
+var ticksPerFrame = 1/3; // 20 tps (at 60 fps)
 var popupPadding = 10;
 var popupTextSize = 30;
 
@@ -414,7 +414,6 @@ function draw() { // main loop
     fullTick();
     ticksToBeDone -= 1;
   }
-
 
   background(0); // set backgroun / delete old drawing
 
