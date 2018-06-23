@@ -385,6 +385,7 @@ function tutorial() {
   addPopup('You can move the camera by dragging with the left mouse button and you can select/unselect an area by dragging with the right mouse button.');
   addPopup('You can zoom by scrolling up and down (pinchng or CTRL-scrolling does not work).');
   addPopup('You can delete a gate by middle-clicking on it or by first selecting it and then pressing X or BACKSPACE.');
+  addPopup('You can move selected gates with WASD. Holding W, A, S or D does not work.')
   addPopup('Press Z to place a new gate or press E to unselect everything');
   addPopup('Press F to cycle the types of all selected gates (gates that are placed are selected by default).');
   addPopup('Press Q to make a connection from the first selected gate to all other selected gates. You can always press Q again to undo this.');
