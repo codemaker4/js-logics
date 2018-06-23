@@ -282,6 +282,18 @@ function keyPressed() {
   else if (keyCode === 84) { // t tutorial.
     tutorial();
   }
+  else if (keyCode === 87) { // w move gates up;
+    moveSelectedGates(0, -100);
+  }
+  else if (keyCode === 83) { // s move gates down
+    moveSelectedGates(0, 100);
+  }
+  else if (keyCode === 65) { // a move left
+    moveSelectedGates(-100, 0);
+  }
+  else if (keyCode === 68) { // d move right
+    moveSelectedGates(100, 0);
+  }
   // return false; // prevent any default behaviour
 }
 function isPressingGate() {
@@ -380,6 +392,36 @@ function tutorial() {
   addPopup('This is version Beta 1.1, changes and improvements are happening all the time.');
   addPopup('Copy/pasting is coming soon, just like saving your curcuits and an undo option.');
   addPopup('This program was made by: CodeMaker4');
+}
+function checkMovingPossible(gateToBechecked, xMovement, yMovement) {
+  for (var i = 0; i < gates.length; i++) {
+    if (gates[i] !== gateToBechecked && gates[i].selected === false) {
+      if (gateToBechecked.xPos + xMovement === gates[i].xPos && gateToBechecked.yPos + yMovement === gates[i].yPos) {
+        return(false);
+      }
+    }
+  }
+  return (true);
+}
+function checkSelectedMovingPossible(xMovement, yMovement) {
+  for (var i = 0; i < gates.length; i++) {
+    if (gates[i].selected === true) {
+      if (checkMovingPossible(gates[i], xMovement, yMovement) === false) {
+        return(false);
+      }
+    }
+  }
+  return(true);
+}
+function moveSelectedGates(xMovement, yMovement) {
+  if (checkSelectedMovingPossible(xMovement, yMovement)) {
+    for (var i = 0; i < gates.length; i++) {
+      if (gates[i].selected === true) {
+        gates[i].xPos += xMovement;
+        gates[i].yPos += yMovement;
+      }
+    }
+  }
 }
 
 function setup() { // p5.js setup
