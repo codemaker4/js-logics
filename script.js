@@ -1,5 +1,6 @@
 var xScreenSize = innerWidth - 5; // canvas size
 var yScreenSize = innerHeight - 5;
+var version = 'Beta 1.2.3'
 var viewX = 0;
 var viewY = 0;
 var viewZoom = 1.0;
@@ -392,7 +393,7 @@ function tutorial() {
   addPopup('Press F to cycle the types of all selected gates (gates that are placed are selected by default).');
   addPopup('Press Q to make a connection from the first selected gate to all other selected gates. You can always press Q again to undo this.');
   addPopup('Press R to reset all gate states to 0/false/off or press T to view this tutorial again.');
-  addPopup('This is version Beta 1.2.1, changes and improvements are happening all the time.');
+  addPopup('This is version ' + version + ', changes and improvements are happening all the time.');
   addPopup('Copy/pasting is coming soon, just like saving your curcuits and an undo option.');
   addPopup('This program was made by: CodeMaker4');
 }
@@ -481,6 +482,12 @@ function draw() { // main loop
   for (var i = popups.length-1; i >= 0; i--) {
     popups[i].render();
   }
+
+  textSize(15);
+  fill(127,255);
+  noStroke()
+  textAlign(RIGHT, BOTTOM)
+  text('JSlogics by Codemaker4. Version ' + version + '.', xScreenSize, yScreenSize);
 
   counter ++; // increment counter
 }
