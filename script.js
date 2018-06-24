@@ -39,6 +39,7 @@ function gate(initX, initY, type) {
     if (this.selected === true) {
       stroke(0,0,255);
       strokeWeight(10);
+      tint(100,100,255,255);
     } else {
       stroke(0,0,50);
       strokeWeight(2);
@@ -52,6 +53,7 @@ function gate(initX, initY, type) {
     rect(this.xPos, this.yPos, 100, 100);
     imageMode(CENTER)
     image(typesI[this.gateType], this.xPos, this.yPos, 100, 100);
+    tint(255,255,255,255);
     textAlign(CENTER, CENTER);
     fill(0)
     textSize(size/2);
@@ -465,7 +467,7 @@ function draw() { // main loop
     rect(selectingStart[0], selectingStart[1], Wmouse[0], Wmouse[1]);
   } else {
     rectMode(CENTER);
-    fill(0,50,0,100);
+    fill(0,0,0,100);
     stroke(127,127,127,100);
     strokeWeight(10);
     rect(round(Wmouse[0]/100)*100, round(Wmouse[1]/100)*100, 100, 100);
