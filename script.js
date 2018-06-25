@@ -315,6 +315,7 @@ function keyPressed() {
   }
   else if (keyCode === 66) { // b loadBackup/undo
     loadBackup();
+  }
   else if (keyCode === 84) { // t tutorial.
     tutorial();
   }
@@ -377,7 +378,8 @@ function removeGate(gateID) {
   for (var i = 0; i < connections.length; i++) {
     if (connections[i].connectionStart > gateID) {
       connections[i].connectionStart -= 1;
-    } if (connections[i].connectionEnd > gateID) {
+    }
+    if (connections[i].connectionEnd > gateID) {
       connections[i].connectionEnd -= 1;
     }
   }
@@ -412,19 +414,20 @@ function doBackup() {
   if (backupWasDone === false) {
     console.log(connections);
     backup = [[],[]];
-    backup[0] = gates.slice();
-    backup[1] = connections.slice();
+    backup[0] = gates.slice(0);
+    backup[1] = connections.slice(0);
     console.log(backup[1]);
     backupWasDone = true;
   }
 }
 function loadBackup() {
-  var oldGates = gates.slice();
-  var oldConnections = connections.slice();
-  gates = backup[0].slice();
-  connections = backup[1].slice();
-  backup[0] = oldGates.slice();
-  backup[1] = oldConnections.slice();
+  var oldGates = gates.slice(0);
+  var oldConnections = connections.slice(0);
+  gates = backup[0].slice(0);
+  connections = backup[1].slice(0);
+  backup[0] = oldGates.slice(0);
+  backup[1] = oldConnections.slice(0);
+}
 function addPopup(popupText) {
   var popupSize = sqrt(popupText.length*1.1)*popupTextSize/2;
   if (popupSize*2 >= xScreenSize-20) {
@@ -539,8 +542,8 @@ function draw() { // main loop
 
   textSize(15);
   fill(127,255);
-  noStroke()
-  textAlign(RIGHT, BOTTOM)
+  noStroke();
+  textAlign(RIGHT, BOTTOM);
   text('JSlogics by Codemaker4. Version ' + version + '.', xScreenSize, yScreenSize);
 
   counter ++; // increment counter
