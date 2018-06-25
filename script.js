@@ -148,7 +148,21 @@ function gateButton(trueConnections, inputs, gate) {
   }
   return(isSelected);
 }
-typesF = [gateAND, gateOR, gateNAND, gateNOR, gateXOR, gateNXOR, gateLamp, gateButton];
+function gateSwitch(trueConnections, inputs, gate) {
+  var isPressed = gateButton(trueConnections, inputs, gate);
+  if (gate.wasPressed === undefined) {
+    gate.wasPressed = isPressed;
+  } else if (isPressed) {
+    if (gate.wasPressed === false) {
+      gate.value = !gate.value;
+      gate.wasPressed = true;
+    }
+  } else {
+    gate.wasPressed = false;
+  }
+  return(gate.value);
+}
+typesF = [gateAND, gateOR, gateNAND, gateNOR, gateXOR, gateNXOR, gateLamp, gateButton, gateSwitch];
 
 function calcGate(gateType, trueConnections, inputs, gate) {
   return(typesF[gateType](trueConnections, inputs, gate));
@@ -437,7 +451,7 @@ function moveSelectedGates(xMovement, yMovement) {
 function setup() { // p5.js setup
   createCanvas(xScreenSize, yScreenSize); // make new canvas to draw on
   noSmooth();
-  typesI = [loadImage('gateImages/AND.png'), loadImage('gateImages/OR.png'), loadImage('gateImages/NAND.png'), loadImage('gateImages/NOR.png'), loadImage('gateImages/XOR.png'), loadImage('gateImages/NXOR.png'), loadImage('gateImages/hollow.png'), loadImage('gateImages/button.png')]; // list tat stores all gate types with images.
+  typesI = [loadImage('gateImages/AND.png'), loadImage('gateImages/OR.png'), loadImage('gateImages/NAND.png'), loadImage('gateImages/NOR.png'), loadImage('gateImages/XOR.png'), loadImage('gateImages/NXOR.png'), loadImage('gateImages/hollow.png'), loadImage('gateImages/button.png'), loadImage('gateImages/switch.png')]; // list tat stores all gate types with images.
   for (var i = 0; i < 10; i++) {
     gates.push(new gate( round(random(-4,4))*gateSize, round(random(-4,4))*gateSize, i%typesI.length));
   }
@@ -474,7 +488,7 @@ function draw() { // main loop
     rect(selectingStart[0], selectingStart[1], Wmouse[0], Wmouse[1]);
   } else {
     rectMode(CENTER);
-    fill(0,0,0,100);
+    fill(0,0,0,0);
     stroke(127,127,127,100);
     strokeWeight(10);
     rect(round(Wmouse[0]/gateSize)*gateSize, round(Wmouse[1]/gateSize)*gateSize, gateSize, gateSize);
