@@ -1,6 +1,6 @@
 var xScreenSize = innerWidth - 5; // canvas size
 var yScreenSize = innerHeight - 5;
-var version = 'Beta 1.3.1';
+var version = 'Beta 1.3.2';
 var gateSize = 100;
 var connectionsVisible = true;
 var connectionOpacity = 127;
@@ -41,29 +41,30 @@ function gate(initX, initY, type) {
   this.totalInputs = 0;
   this.trueInputs = 0;
   this.selected = false;
+  this.rotation = 0;
   this.render = function() { // graphics, no calculations.
-    if (this.selected === true) {
-      stroke(0,0,255);
-      strokeWeight(10);
-      tint(127,127,255,255);
-    } else {
-      stroke(0,0,50);
-      strokeWeight(2);
-    }
-    if (this.value === true) {
-      fill(0,255,0);
-    } else {
-      fill(0,100,0);
-    }
-    rectMode(CENTER);
-    rect(this.xPos, this.yPos, gateSize, gateSize);
-    imageMode(CENTER)
-    image(typesI[this.gateType], this.xPos, this.yPos, gateSize, gateSize);
-    tint(255,255,255,255);
-    textAlign(CENTER, CENTER);
-    fill(0)
-    textSize(size/2);
-    text(this.gateType);
+    push();
+      if (this.selected === true) {
+        stroke(0,0,255);
+        strokeWeight(10);
+        tint(127,127,255,255);
+      } else {
+        stroke(0,0,50);
+        strokeWeight(2);
+      }
+      if (this.value === true) {
+        fill(0,255,0);
+      } else {
+        fill(0,100,0);
+      }
+      translate(this.xPos, this.yPos);
+      rotate(this.rotation * HALF_PI);
+      translate(-this.xPos, -this.yPos);
+      rectMode(CENTER);
+      rect(this.xPos, this.yPos, gateSize, gateSize);
+      imageMode(CENTER)
+      image(typesI[this.gateType], this.xPos, this.yPos, gateSize, gateSize);
+    pop();
   }
 }
 
@@ -82,6 +83,7 @@ function popUp(x,y,xSize,ySize,popupText) {
     fill(255,255,255,255);
     noStroke();
     textSize(popupTextSize);
+    textAlign(CENTER, CENTER);
     text(this.popupText, this.xPos, this.yPos, this.xSize, this.ySize);
   }
 }
@@ -261,7 +263,12 @@ function onWorldMouse() {
 function keyPressed() {
   if (keyCode === 82) { // r reset values
     for (var i = 0; i < gates.length; i++) {
-      gates[i].value = 0;
+      if (gates[i].selected) {
+        gates[i].rotation += 1;
+        if (gates[i].rotation >= 4) {
+          gates[i].rotation = 0;
+        }
+      }
     }
   }
   else if (keyCode === 88 || keyCode === 8) {// x or backspace delete gate
@@ -411,7 +418,7 @@ function tutorial() {
   addPopup('Press Z to place a new gate or press E to unselect everything');
   addPopup('Press F to cycle the types of all selected gates (gates that are placed are selected by default).');
   addPopup('Press Q to make a connection from the first selected gate to all other selected gates. You can always press Q again to undo this.');
-  addPopup('Press R to reset all gate states to 0/false/off or press T to view this tutorial again.');
+  addPopup('Press R to rotate all selected gates 90 degrees clockwise or press T to view this tutorial again.');
   addPopup('This is version ' + version + ', changes and improvements are happening all the time.');
   addPopup('Copy/pasting is coming soon, just like saving your curcuits and an undo option.');
   addPopup('This program was made by: CodeMaker4');
