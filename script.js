@@ -1,6 +1,6 @@
 var xScreenSize = innerWidth - 5; // canvas size
 var yScreenSize = innerHeight - 5;
-var version = 'Beta 1.3.1'
+var version = 'Beta 1.3.1';
 var gateSize = 100;
 var connectionsVisible = true;
 var connectionOpacity = 127;
@@ -19,7 +19,7 @@ var ticksPerFrame = 1/3; // 20 tps (at 60 fps)
 var popupPadding = 10;
 var popupTextSize = 30;
 
-// connections*2 + gates < tickALgorithim complexity < connections*2 + gates * connections
+// tickALgorithim complexity = gates*2 + connections
 
 document.addEventListener('contextmenu', event => event.preventDefault()); // prevent rightclick menu to make rihtclick control less annoying to use.
 
