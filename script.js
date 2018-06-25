@@ -44,7 +44,7 @@ function gate(initX, initY, type) {
     if (this.selected === true) {
       stroke(0,0,255);
       strokeWeight(10);
-      tint(100,100,255,255);
+      tint(127,127,255,255);
     } else {
       stroke(0,0,50);
       strokeWeight(2);
