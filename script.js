@@ -38,7 +38,8 @@ function gate(initX, initY, type) {
   this.size = size; // size/diameter of dor
   this.gateType = type;
   this.value = false;
-  this.inputs = [];
+  this.totalInputs = 0;
+  this.trueInputs = 0;
   this.selected = false;
   this.render = function() { // graphics, no calculations.
     if (this.selected === true) {
@@ -112,11 +113,15 @@ function connection(comesFrom, goesTo) {
 
 function tickConnections() {
   for (var i = 0; i < gates.length; i++) {
-    gates[i].inputs = [];
+    gates[i].trueInputs = 0;
+    gates[i].totalInputs = 0;
   }
   for (var i = 0; i < connections.length; i++) {
     var currentConn = connections[i];
-    gates[currentConn.connectionEnd].inputs.push(gates[currentConn.connectionStart].value);
+    gates[currentConn.connectionEnd].totalInputs += 1;
+    if (gates[currentConn.connectionStart].value === true) {
+      gates[currentConn.connectionEnd].trueInputs += 1;
+    }
   }
 }
 
@@ -170,13 +175,7 @@ function calcGate(gateType, trueConnections, inputs, gate) {
 
 function tickGates() {
   for (var i = 0; i < gates.length; i++) {
-    var trueConnections = 0;
-    for (var j = 0; j < gates[i].inputs.length; j++) {
-      if (gates[i].inputs[j] === true) {
-        trueConnections += 1;
-      }
-    }
-    gates[i].value = calcGate(gates[i].gateType, trueConnections, gates[i].inputs.length, gates[i]);
+    gates[i].value = calcGate(gates[i].gateType, gates[i].trueInputs, gates[i].totalInputs, gates[i]);
   }
 }
 
