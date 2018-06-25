@@ -11,6 +11,7 @@ var viewZoom = 1.0;
 var counter = 0; // loop counter counts ammountof times the main loop has been executed.
 var gates = []; // list that keeps all the gates.
 var connections = []; // list that keeps all the connections
+var clipBoard = [[],[]];
 var popups = [];
 var typesF = []; // list tat stores all gate types with cumputation functions.
 var typesI = []; // list tat stores all gate types with images.
@@ -450,6 +451,22 @@ function moveSelectedGates(xMovement, yMovement) {
         gates[i].xPos += xMovement;
         gates[i].yPos += yMovement;
       }
+    }
+  }
+}
+
+function copy() {
+  clipBoard = [[],[]];
+  var selectedConnections = [];
+  for (var i = 0; i < connections.length; i++) {
+    if (gates[connections[i].connectionStart].selected === true && gates[connections[i].connectionEnd].selected === true) {
+      selectedConnections.push(connections[i]);
+    }
+  }
+  clipBoard[1] = selectedConnections.slice();
+  for (var i = 0; i < gates.length; i++) {
+    if (gates[i].selected === true) {
+
     }
   }
 }
