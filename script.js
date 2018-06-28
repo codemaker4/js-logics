@@ -10,13 +10,14 @@ var viewY = 0;
 var viewZoom = 1.0;
 var counter = 0; // loop counter counts ammountof times the main loop has been executed.
 var gates = []; // list that keeps all the gates.
-var connections = []; // list that keeps all the connections
-var clipBoard = [[],[]];
+var myConnections = []; // list that keeps all the connections
+var backup = [[],[]]; // list containing lists containng connections and gates before last action.
 var popups = [];
 var typesF = []; // list tat stores all gate types with cumputation functions.
 var typesI = []; // list tat stores all gate types with images.
 var ticksToBeDone = 0;
 var ticksPerFrame = 1/3; // 20 tps (at 60 fps)
+var backupWasDone = false;
 var popupPadding = 10;
 var popupTextSize = 30;
 
@@ -119,8 +120,8 @@ function tickConnections() {
     gates[i].trueInputs = 0;
     gates[i].totalInputs = 0;
   }
-  for (var i = 0; i < connections.length; i++) {
-    var currentConn = connections[i];
+  for (var i = 0; i < myConnections.length; i++) {
+    var currentConn = myConnections[i];
     gates[currentConn.connectionEnd].totalInputs += 1;
     if (gates[currentConn.connectionStart].value === true) {
       gates[currentConn.connectionEnd].trueInputs += 1;
@@ -192,8 +193,8 @@ function renderAll() {
     gates[i].render();
   }
   if (connectionsVisible === true) {
-    for (var i = 0; i < connections.length; i++) {
-      connections[i].render();
+    for (var i = 0; i < myConnections.length; i++) {
+      myConnections[i].render();
     }
   }
 }
@@ -263,6 +264,7 @@ function onWorldMouse() {
 }
 function keyPressed() {
   if (keyCode === 82) { // r reset values
+    doBackup();
     for (var i = 0; i < gates.length; i++) {
       if (gates[i].selected) {
         gates[i].rotation += 1;
@@ -282,6 +284,7 @@ function keyPressed() {
     firstSelected = undefined;
   }
   else if (keyCode === 69) { // e reset selection
+    doBackup();
     for (var i = 0; i < gates.length; i++) {
       gates[i].selected = false;
       firstSelected = undefined;
@@ -297,6 +300,7 @@ function keyPressed() {
     }
   }
   else if (keyCode === 70) { // f cycle type of selected gates
+    doBackup();
     for (var i = 0; i < gates.length; i++) {
       if (gates[i].selected === true) {
         gates[i].gateType += 1;
@@ -308,6 +312,9 @@ function keyPressed() {
   }
   else if (keyCode === 90) { // z newGate
     newGate();
+  }
+  else if (keyCode === 66) { // b loadBackup/undo
+    loadBackup();
   }
   else if (keyCode === 84) { // t tutorial.
     tutorial();
@@ -347,30 +354,32 @@ function doConnection(gate1, gate2) {
   if (gate1 === gate2) {
     return(false);
   }
-  for (var i = 0; i < connections.length; i++) {
-    if (connections[i].connectionStart === gate1 && connections[i].connectionEnd === gate2) {
-      connections.splice(i,1);
+  doBackup();
+  for (var i = 0; i < myConnections.length; i++) {
+    if (myConnections[i].connectionStart === gate1 && myConnections[i].connectionEnd === gate2) {
+      myConnections.splice(i,1);
       return(false);
-    } else if (connections[i].connectionStart === gate2 && connections[i].connectionEnd === gate1) {
-      connections[i].connectionStart = gate1;
-      connections[i].connectionEnd = gate2;
+    } else if (myConnections[i].connectionStart === gate2 && myConnections[i].connectionEnd === gate1) {
+      myConnections[i].connectionStart = gate1;
+      myConnections[i].connectionEnd = gate2;
       return(false);
     }
   }
-  connections.push(new connection(gate1, gate2));
+  myConnections.push(new connection(gate1, gate2));
 }
 function removeGate(gateID) {
-  for (var i = 0; i < connections.length; i++) {
-    if (connections[i].connectionStart === gateID || connections[i].connectionEnd === gateID) {
-      connections.splice(i,1);
+  doBackup();
+  for (var i = 0; i < myConnections.length; i++) {
+    if (myConnections[i].connectionStart === gateID || myConnections[i].connectionEnd === gateID) {
+      myConnections.splice(i,1);
       i -= 1;
     }
   }
-  for (var i = 0; i < connections.length; i++) {
-    if (connections[i].connectionStart > gateID) {
-      connections[i].connectionStart -= 1;
-    } if (connections[i].connectionEnd > gateID) {
-      connections[i].connectionEnd -= 1;
+  for (var i = 0; i < myConnections.length; i++) {
+    if (myConnections[i].connectionStart > gateID) {
+      myConnections[i].connectionStart -= 1;
+    }if (myConnections[i].connectionEnd > gateID) {
+      myConnections[i].connectionEnd -= 1;
     }
   }
   gates.splice(gateID,1);
@@ -399,6 +408,24 @@ function selectDrag(startPos, endPos) {
       select(i);
     }
   }
+}
+function doBackup() {
+  if (backupWasDone === false) {
+    console.log(myConnections);
+    backup = [[],[]];
+    backup[0] = gates.slice(0);
+    backup[1] = myConnections.slice(0);
+    console.log(backup[1]);
+    backupWasDone = true;
+  }
+}
+function loadBackup() {
+  var oldGates = gates.slice(0);
+  var oldConnections = myConnections.slice(0);
+  gates = backup[0].slice(0);
+  myConnections = backup[1].slice(0);
+  backup[0] = oldGates.slice(0);
+  backup[1] = oldConnections.slice(0);
 }
 function addPopup(popupText) {
   var popupSize = sqrt(popupText.length*1.1)*popupTextSize/2;
@@ -455,22 +482,6 @@ function moveSelectedGates(xMovement, yMovement) {
   }
 }
 
-function copy() {
-  clipBoard = [[],[]];
-  var selectedConnections = [];
-  for (var i = 0; i < connections.length; i++) {
-    if (gates[connections[i].connectionStart].selected === true && gates[connections[i].connectionEnd].selected === true) {
-      selectedConnections.push(connections[i]);
-    }
-  }
-  clipBoard[1] = selectedConnections.slice();
-  for (var i = 0; i < gates.length; i++) {
-    if (gates[i].selected === true) {
-
-    }
-  }
-}
-
 function setup() { // p5.js setup
   createCanvas(xScreenSize, yScreenSize); // make new canvas to draw on
   noSmooth();
@@ -479,8 +490,9 @@ function setup() { // p5.js setup
     gates.push(new gate( round(random(-4,4))*gateSize, round(random(-4,4))*gateSize, i%typesI.length));
   }
   for (var i = 0; i < 10; i ++) {
-    connections.push(new connection(floor(random(gates.length)), floor(random(gates.length))));
+    myConnections.push(new connection(floor(random(gates.length)), floor(random(gates.length))));
   }
+  doBackup();
   addPopup('press T for a tutorial, click anywhere to close this message.')
 }
 
@@ -488,6 +500,7 @@ var Wmouse = [0,0];
 
 function draw() { // main loop
   Wmouse = onWorldMouse();
+  backupWasDone = false;
 
   ticksToBeDone += ticksPerFrame;
   while (ticksToBeDone >= 1) {
