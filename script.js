@@ -375,17 +375,18 @@ function doConnection(gate1, gate2) {
 }
 function removeGate(gateID) {
   doBackup();
-  for (var i = 0; i < myConnections.length; i++) {
-    if (myConnections[i].connectionStart === gateID || myConnections[i].connectionEnd === gateID) {
-      myConnections.splice(i,1);
+  for (var i = 0; i < connections.length; i++) {
+    if (connections[i].connectionStart === gateID || connections[i].connectionEnd === gateID) {
+      connections.splice(i,1);
       i -= 1;
     }
   }
-  for (var i = 0; i < myConnections.length; i++) {
-    if (myConnections[i].connectionStart > gateID) {
-      myConnections[i].connectionStart -= 1;
-    }if (myConnections[i].connectionEnd > gateID) {
-      myConnections[i].connectionEnd -= 1;
+  for (var i = 0; i < connections.length; i++) {
+    if (connections[i].connectionStart > gateID) {
+      connections[i].connectionStart -= 1;
+    }
+    if (connections[i].connectionEnd > gateID) {
+      connections[i].connectionEnd -= 1;
     }
   }
   gates.splice(gateID,1);
@@ -555,8 +556,8 @@ function draw() { // main loop
 
   textSize(15);
   fill(127,255);
-  noStroke()
-  textAlign(RIGHT, BOTTOM)
+  noStroke();
+  textAlign(RIGHT, BOTTOM);
   text('JSlogics by Codemaker4. Version ' + version + '.', xScreenSize, yScreenSize);
 
   counter ++; // increment counter
