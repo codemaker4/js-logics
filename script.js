@@ -11,7 +11,7 @@ var viewZoom = 1.0;
 var counter = 0; // loop counter counts ammountof times the main loop has been executed.
 var gates = []; // list that keeps all the gates.
 var myConnections = []; // list that keeps all the connections
-var backup = [[],[]]; // list containing lists containng connections and gates before last action.
+var backup = ['','']; // list containing lists containng connections and gates before last action.
 var popups = [];
 var typesF = []; // list tat stores all gate types with cumputation functions.
 var typesI = []; // list tat stores all gate types with images.
@@ -34,17 +34,19 @@ function posit(x) { // returns positive number
   return(-x); // return negative input
 }
 
-function gate(initX, initY, type) {
-  this.xPos = initX; // x position of center of dot
-  this.yPos = initY; // y position of center of dot
-  this.size = size; // size/diameter of dor
-  this.gateType = type;
-  this.value = false;
-  this.totalInputs = 0;
-  this.trueInputs = 0;
-  this.selected = false;
-  this.rotation = 0;
-  this.render = function() { // graphics, no calculations.
+class gate {
+  constructor(initX, initY, type, initVal) {
+    this.xPos = initX; // x position of center of dot
+    this.yPos = initY; // y position of center of dot
+    this.size = size; // size/diameter of dor
+    this.gateType = type;
+    this.value = initVal;
+    this.totalInputs = 0;
+    this.trueInputs = 0;
+    this.selected = false;
+    this.rotation = 0;
+  }
+  render() { // graphics, no calculations.
     push();
       if (this.selected === true) {
         stroke(0,0,255);
@@ -70,13 +72,15 @@ function gate(initX, initY, type) {
   }
 }
 
-function popUp(x,y,xSize,ySize,popupText) {
-  this.xPos = x;
-  this.yPos = y;
-  this.xSize = xSize;
-  this.ySize = ySize;
-  this.popupText = popupText;
-  this.render = function() {
+class popUp {
+  constructor(x,y,xSize,ySize,popupText) {
+    this.xPos = x;
+    this.yPos = y;
+    this.xSize = xSize;
+    this.ySize = ySize;
+    this.popupText = popupText;
+  }
+  render() {
     rectMode(CORNER);
     stroke(255,255,255,255);
     strokeWeight(5);
@@ -90,11 +94,13 @@ function popUp(x,y,xSize,ySize,popupText) {
   }
 }
 
-function connection(comesFrom, goesTo) {
-  this.connectionStart = comesFrom;
-  this.connectionEnd = goesTo;
-  this.color = color(random(50,200), random(50,200), random(50,200),connectionOpacity);
-  this.render = function() {
+class connection {
+  constructor(comesFrom, goesTo) {
+    this.connectionStart = comesFrom;
+    this.connectionEnd = goesTo;
+    this.color = color(random(50,200), random(50,200), random(50,200),connectionOpacity);
+  }
+  render() {
     stroke(this.color);
     strokeWeight(5);
     var gate1 = gates[this.connectionStart];
@@ -347,7 +353,7 @@ function newGate() {
       return(false);
     }
   }
-  gates.push(new gate(round(Wmouse[0]/gateSize)*gateSize, round(Wmouse[1]/gateSize)*gateSize, 0));
+  gates.push(new gate(round(Wmouse[0]/gateSize)*gateSize, round(Wmouse[1]/gateSize)*gateSize, 0, false));
   select(gates.length-1);
 }
 function doConnection(gate1, gate2) {
@@ -411,21 +417,19 @@ function selectDrag(startPos, endPos) {
 }
 function doBackup() {
   if (backupWasDone === false) {
-    console.log(myConnections);
-    backup = [[],[]];
-    backup[0] = gates.slice(0);
-    backup[1] = myConnections.slice(0);
-    console.log(backup[1]);
+    balckup = ['',''];
+    backup[0] = JSON.stringify(gates);
+    backup[1] = JSON.stringify(myConnections);
     backupWasDone = true;
   }
 }
 function loadBackup() {
-  var oldGates = gates.slice(0);
-  var oldConnections = myConnections.slice(0);
-  gates = backup[0].slice(0);
-  myConnections = backup[1].slice(0);
-  backup[0] = oldGates.slice(0);
-  backup[1] = oldConnections.slice(0);
+  var oldGates = JSON.stringify(gates);
+  var oldConnections = JSON.stringify(myConnections);
+  importJSONStrings(backup[0], backup[1]);
+  backup[0] = oldGates;
+  backup[1] = oldConnections;
+
 }
 function addPopup(popupText) {
   var popupSize = sqrt(popupText.length*1.1)*popupTextSize/2;
@@ -481,13 +485,23 @@ function moveSelectedGates(xMovement, yMovement) {
     }
   }
 }
+function importJSONStrings(gatesString, connectionsString) {
+  gates = JSON.parse(gatesString);
+  myConnections = JSON.parse(connectionsString);
+  for (var i = 0; i < gates.length; i++) {
+    gates[i] = new gate(gates[i].xPos, gates[i].yPos, gates[i].gateType, gates[i].value);
+  }
+  for (var i = 0; i < myConnections.length; i++) {
+    myConnections[i] = new connection(myConnections[i].connectionStart, myConnections[i].connectionEnd);
+  }
+}
 
 function setup() { // p5.js setup
   createCanvas(xScreenSize, yScreenSize); // make new canvas to draw on
   noSmooth();
   typesI = [loadImage('gateImages/AND.png'), loadImage('gateImages/OR.png'), loadImage('gateImages/NAND.png'), loadImage('gateImages/NOR.png'), loadImage('gateImages/XOR.png'), loadImage('gateImages/NXOR.png'), loadImage('gateImages/hollow.png'), loadImage('gateImages/button.png'), loadImage('gateImages/switch.png')]; // list tat stores all gate types with images.
   for (var i = 0; i < 10; i++) {
-    gates.push(new gate( round(random(-4,4))*gateSize, round(random(-4,4))*gateSize, i%typesI.length));
+    gates.push(new gate( round(random(-4,4))*gateSize, round(random(-4,4))*gateSize, i%typesI.length, false));
   }
   for (var i = 0; i < 10; i ++) {
     myConnections.push(new connection(floor(random(gates.length)), floor(random(gates.length))));
