@@ -1,6 +1,6 @@
 var xScreenSize = innerWidth - 5; // canvas size
 var yScreenSize = innerHeight - 5;
-var version = 'Beta 1.3.2';
+var version = 'Beta 1.4';
 var gateSize = 100;
 var connectionsVisible = true;
 var connectionOpacity = 127;
@@ -10,7 +10,7 @@ var viewY = 0;
 var viewZoom = 1.0;
 var counter = 0; // loop counter counts ammountof times the main loop has been executed.
 var gates = []; // list that keeps all the gates.
-var myConnections = []; // list that keeps all the connections
+var connections = []; // list that keeps all the connections
 var backup = ['','']; // list containing lists containng connections and gates before last action.
 var popups = [];
 var typesF = []; // list tat stores all gate types with cumputation functions.
@@ -24,6 +24,13 @@ var popupTextSize = 30;
 // tickALgorithim complexity = gates*2 + connections
 
 document.addEventListener('contextmenu', event => event.preventDefault()); // prevent rightclick menu to make rihtclick control less annoying to use.
+
+var JSLeerder = localStorage.getItem("JSLeerder"); // checks if game was played earlier
+if (JSLeerder != "ja"){
+  localStorage.setItem("JSLeerder", "ja"); // set local storage to default
+  localStorage.setItem("JSLsaveGates", '');
+  localStorage.setItem("JSLsaveConns", '');
+}
 
 function isPosit(x) { // returns true if x is 0 or higher
   return (x>=0); // statement that makes boolean
@@ -126,8 +133,8 @@ function tickConnections() {
     gates[i].trueInputs = 0;
     gates[i].totalInputs = 0;
   }
-  for (var i = 0; i < myConnections.length; i++) {
-    var currentConn = myConnections[i];
+  for (var i = 0; i < connections.length; i++) {
+    var currentConn = connections[i];
     gates[currentConn.connectionEnd].totalInputs += 1;
     if (gates[currentConn.connectionStart].value === true) {
       gates[currentConn.connectionEnd].trueInputs += 1;
@@ -199,8 +206,8 @@ function renderAll() {
     gates[i].render();
   }
   if (connectionsVisible === true) {
-    for (var i = 0; i < myConnections.length; i++) {
-      myConnections[i].render();
+    for (var i = 0; i < connections.length; i++) {
+      connections[i].render();
     }
   }
 }
@@ -337,6 +344,14 @@ function keyPressed() {
   else if (keyCode === 68) { // d move right
     moveSelectedGates(gateSize, 0);
   }
+  else if (keyCode === 75) { // k saveToLocalStorage
+    saveToLocalStorage();
+    addPopup("World saved. Press L to load it later.");
+  }
+  else if (keyCode === 76) { // l loadFromLocalStorage
+    loadFromLocalStorage();
+    addPopup('Saved world loaded. Press B to restore your old world.');
+  }
   // return false; // prevent any default behaviour
 }
 function isPressingGate() {
@@ -361,17 +376,17 @@ function doConnection(gate1, gate2) {
     return(false);
   }
   doBackup();
-  for (var i = 0; i < myConnections.length; i++) {
-    if (myConnections[i].connectionStart === gate1 && myConnections[i].connectionEnd === gate2) {
-      myConnections.splice(i,1);
+  for (var i = 0; i < connections.length; i++) {
+    if (connections[i].connectionStart === gate1 && connections[i].connectionEnd === gate2) {
+      connections.splice(i,1);
       return(false);
-    } else if (myConnections[i].connectionStart === gate2 && myConnections[i].connectionEnd === gate1) {
-      myConnections[i].connectionStart = gate1;
-      myConnections[i].connectionEnd = gate2;
+    } else if (connections[i].connectionStart === gate2 && connections[i].connectionEnd === gate1) {
+      connections[i].connectionStart = gate1;
+      connections[i].connectionEnd = gate2;
       return(false);
     }
   }
-  myConnections.push(new connection(gate1, gate2));
+  connections.push(new connection(gate1, gate2));
 }
 function removeGate(gateID) {
   doBackup();
@@ -420,13 +435,13 @@ function doBackup() {
   if (backupWasDone === false) {
     balckup = ['',''];
     backup[0] = JSON.stringify(gates);
-    backup[1] = JSON.stringify(myConnections);
+    backup[1] = JSON.stringify(connections);
     backupWasDone = true;
   }
 }
 function loadBackup() {
   var oldGates = JSON.stringify(gates);
-  var oldConnections = JSON.stringify(myConnections);
+  var oldConnections = JSON.stringify(connections);
   importJSONStrings(backup[0], backup[1]);
   backup[0] = oldGates;
   backup[1] = oldConnections;
@@ -450,10 +465,11 @@ function tutorial() {
   addPopup('You can move selected gates with WASD. Holding W, A, S or D does not work.')
   addPopup('Press Z to place a new gate or press E to unselect everything');
   addPopup('Press F to cycle the types of all selected gates (gates that are placed are selected by default).');
-  addPopup('Press Q to make a connection from the first selected gate to all other selected gates. You can always press Q again to undo this.');
+  addPopup('Press Q to make a connection from the first selected gate to all other selected gates. B is the undo button. (stands for Backup)');
+  addPopup('Press K to save your world, and press L to load it later. Now only 1 local save is supported.');
   addPopup('Press R to rotate all selected gates 90 degrees clockwise or press T to view this tutorial again.');
   addPopup('This is version ' + version + ', changes and improvements are happening all the time.');
-  addPopup('Copy/pasting is coming soon, just like saving your curcuits and an undo option.');
+  addPopup('Copy/pasting is coming soon, just like sharing your curcuits and multiple local saves.');
   addPopup('This program was made by: CodeMaker4');
 }
 function checkMovingPossible(gateToBechecked, xMovement, yMovement) {
@@ -488,13 +504,21 @@ function moveSelectedGates(xMovement, yMovement) {
 }
 function importJSONStrings(gatesString, connectionsString) {
   gates = JSON.parse(gatesString);
-  myConnections = JSON.parse(connectionsString);
+  connections = JSON.parse(connectionsString);
   for (var i = 0; i < gates.length; i++) {
     gates[i] = new gate(gates[i].xPos, gates[i].yPos, gates[i].gateType, gates[i].value);
   }
-  for (var i = 0; i < myConnections.length; i++) {
-    myConnections[i] = new connection(myConnections[i].connectionStart, myConnections[i].connectionEnd);
+  for (var i = 0; i < connections.length; i++) {
+    connections[i] = new connection(connections[i].connectionStart, connections[i].connectionEnd);
   }
+}
+function saveToLocalStorage() {
+  localStorage.setItem("JSLsaveGates", JSON.stringify(gates));
+  localStorage.setItem("JSLsaveConns", JSON.stringify(connections));
+}
+function loadFromLocalStorage() {
+  doBackup();
+  importJSONStrings(localStorage.getItem("JSLsaveGates"), localStorage.getItem("JSLsaveConns"));
 }
 
 function setup() { // p5.js setup
@@ -505,7 +529,7 @@ function setup() { // p5.js setup
     gates.push(new gate( round(random(-4,4))*gateSize, round(random(-4,4))*gateSize, i%typesI.length, false));
   }
   for (var i = 0; i < 10; i ++) {
-    myConnections.push(new connection(floor(random(gates.length)), floor(random(gates.length))));
+    connections.push(new connection(floor(random(gates.length)), floor(random(gates.length))));
   }
   doBackup();
   addPopup('press T for a tutorial, click anywhere to close this message.')
