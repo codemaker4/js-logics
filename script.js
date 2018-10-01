@@ -276,7 +276,7 @@ function onWorldMouse() {
   return([(mouseX/viewZoom)-viewX-(xScreenSize/2/viewZoom),(mouseY/viewZoom)-viewY-(yScreenSize/2/viewZoom)])
 }
 function keyPressed() {
-  if (keyCode === 82) { // r reset values
+  if (keyCode === 82) { // r rotate
     doBackup();
     for (var i = 0; i < gates.length; i++) {
       if (gates[i].selected) {
@@ -307,7 +307,11 @@ function keyPressed() {
     if (firstSelected !== undefined) {
       for (var i = 0; i < gates.length; i++) {
         if (gates[i].selected === true) {
-          doConnection(firstSelected, i);
+          if (!keyIsDown(16)){ // not shift
+            doConnection(firstSelected, i);
+          } else {            // shift
+            doConnection(i, firstSelected);
+          }
         }
       }
     }
@@ -363,12 +367,14 @@ function isPressingGate() {
   return([false, 0]);
 }
 function newGate() {
+  var roundedMouseX = round(Wmouse[0]/gateSize)*gateSize;
+  var roundedMouseY = round(Wmouse[1]/gateSize)*gateSize;
   for (var i = 0; i < gates.length; i++) {
-    if (gates[i].xPos === round(Wmouse[0]/gateSize)*gateSize && gates[i].yPos === round(Wmouse[1]/gateSize)*gateSize) {
+    if (gates[i].xPos === roundedMouseX && gates[i].yPos === roundedMouseY) {
       return(false);
     }
   }
-  gates.push(new gate(round(Wmouse[0]/gateSize)*gateSize, round(Wmouse[1]/gateSize)*gateSize, 0, false));
+  gates.push(new gate(roundedMouseX, roundedMouseY, 0, false));
   select(gates.length-1);
 }
 function doConnection(gate1, gate2) {
