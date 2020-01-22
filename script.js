@@ -1,5 +1,5 @@
-var xScreenSize = innerWidth - 5; // canvas size
-var yScreenSize = innerHeight - 5;
+var xScreenSize = innerWidth; // canvas size
+var yScreenSize = innerHeight;
 var version = 'Beta 1.4';
 var gateSize = 100;
 var connectionsVisible = true;
@@ -149,7 +149,7 @@ function gateOR(trueConnections, inputs, gate) {
   return(trueConnections >= 1);
 }
 function gateXOR(trueConnections, inputs, gate) {
-  return(trueConnections == 1);
+  return(trueConnections%2 == 1);
 }
 function gateNAND(trueConnections, inputs, gate) {
   return(!(trueConnections == inputs));
@@ -158,7 +158,7 @@ function gateNOR(trueConnections, inputs, gate) {
   return(!(trueConnections >= 1));
 }
 function gateNXOR(trueConnections, inputs, gate) {
-  return(!(trueConnections == 1));
+  return(!(trueConnections%2 == 1));
 }
 function gateLamp(trueConnections, inputs, gate) {
   return(gateAND(trueConnections, inputs))
