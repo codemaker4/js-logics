@@ -1,6 +1,6 @@
 var xScreenSize = innerWidth; // canvas size
 var yScreenSize = innerHeight;
-var version = 'Beta 1.4';
+var version = 'Beta 0.5';
 var gateSize = 100;
 var connectionsVisible = true;
 var connectionOpacity = 127;
@@ -15,11 +15,15 @@ var backup = ['','']; // list containing lists containng connections and gates b
 var popups = [];
 var typesF = []; // list tat stores all gate types with cumputation functions.
 var typesI = []; // list tat stores all gate types with images.
-var ticksToBeDone = 0;
-var ticksPerFrame = 1/3; // 20 tps (at 60 fps)
+// var ticksToBeDone = 0;
+// var ticksPerFrame = 1/3; // 20 tps (at 60 fps)
 var backupWasDone = false;
 var popupPadding = 10;
 var popupTextSize = 30;
+var tickInterval = 0;
+var ticksPaused = true;
+var tickRate = 40; // tps
+var timeSpeedFactor = 2;
 
 // tickALgorithim complexity = gates*2 + connections
 
@@ -52,6 +56,7 @@ class gate {
     this.trueInputs = 0;
     this.selected = false;
     this.rotation = 0;
+    this.gotPressed = false
   }
   render() { // graphics, no calculations.
     push();
@@ -164,14 +169,15 @@ function gateLamp(trueConnections, inputs, gate) {
   return(gateAND(trueConnections, inputs))
 }
 function gateButton(trueConnections, inputs, gate) {
-  var isSelected = dist(Wmouse[0],Wmouse[1],gate.xPos,gate.yPos) < gateSize/2 && mouseIsPressed && mouseButton === LEFT;
-  if (isSelected) {
-    dragging = false;
+  if (gate.gotPressed) {
+    gate.gotPressed = false;
+    console.log(gate.gotPressed);
+    return true;
   }
-  return(isSelected);
+  return false;
 }
 function gateSwitch(trueConnections, inputs, gate) {
-  var isPressed = gateButton(trueConnections, inputs, gate);
+  var isPressed = gate.gotPressed
   if (gate.wasPressed === undefined) {
     gate.wasPressed = isPressed;
   } else if (isPressed) {
@@ -182,6 +188,7 @@ function gateSwitch(trueConnections, inputs, gate) {
   } else {
     gate.wasPressed = false;
   }
+  gate.gotPressed = false;
   return(gate.value);
 }
 typesF = [gateAND, gateOR, gateNAND, gateNOR, gateXOR, gateNXOR, gateLamp, gateButton, gateSwitch];
@@ -356,8 +363,21 @@ function keyPressed() {
     loadFromLocalStorage();
     addPopup('Saved world loaded. Press B to restore your old world.');
   }
+  else if (keyCode === 67) { // c copy and paste selected gates
+    copyGates();
+  }
+  else if (keyCode === 79) { // o show/hide connections
+    connectionsVisible = !connectionsVisible;
+  } else if (keyCode === 188) { // < slowTime
+    slowTime();
+  } else if (keyCode === 190) { // > speedTime
+    speedTime();
+  } else if (keyCode === 80) { // p pause time
+    pausePlayTime();
+  }
   // return false; // prevent any default behaviour
 }
+
 function isPressingGate() {
   for (var i = 0; i < gates.length; i++) {
     if (dist(Wmouse[0],Wmouse[1],gates[i].xPos,gates[i].yPos) < gateSize/2) {
@@ -473,9 +493,11 @@ function tutorial() {
   addPopup('Press F to cycle the types of all selected gates (gates that are placed are selected by default).');
   addPopup('Press Q to make a connection from the first selected gate to all other selected gates. B is the undo button. (stands for Backup)');
   addPopup('Press K to save your world, and press L to load it later. Now only 1 local save is supported.');
+  addPopup('Press C to copy all selected gates and connections between selected gates.');
+  addPopup('Press O to show/hide the connections.');
   addPopup('Press R to rotate all selected gates 90 degrees clockwise or press T to view this tutorial again.');
   addPopup('This is version ' + version + ', changes and improvements are happening all the time.');
-  addPopup('Copy/pasting is coming soon, just like sharing your curcuits and multiple local saves.');
+  addPopup('More features like the ability to share curcuits or have multipole saves are coming soon.');
   addPopup('This program was made by: CodeMaker4');
 }
 function checkMovingPossible(gateToBechecked, xMovement, yMovement) {
@@ -526,10 +548,75 @@ function loadFromLocalStorage() {
   doBackup();
   importJSONStrings(localStorage.getItem("JSLsaveGates"), localStorage.getItem("JSLsaveConns"));
 }
+function copyGates() {
+  var newGates = [];
+  var oldIDs = []
+  for (var i = 0; i < gates.length; i++) {
+    if (gates[i].selected) {
+      newGates.push(Object.assign(new gate(), JSON.parse(JSON.stringify(gates[i]))));
+      oldIDs.push(i)
+    }
+  }
+
+  for (var i = 0; i < connections.length; i++) {
+    if (oldIDs.includes(connections[i].connectionStart) && oldIDs.includes(connections[i].connectionEnd)) {
+      connections.push(new connection(gates.length+oldIDs.indexOf(connections[i].connectionStart), gates.length+oldIDs.indexOf(connections[i].connectionEnd)))
+    }
+  }
+
+  for (var i = 0; i < gates.length; i++) { // unselect all old gates to prevent the collsion checking being skipped
+    gates[i].selected = false;
+  }
+  var foundPlace = false;
+  while (!foundPlace) {
+    for (var i = 0; i < newGates.length; i++) {
+      newGates[i].xPos += gateSize;
+    }
+    foundPlace = true;
+    for (var i = 0; i < newGates.length; i++) {
+      if (!checkMovingPossible(newGates[i], 0, 0)) {
+        foundPlace = false;
+        break;
+      }
+    }
+  }
+  for (var i = 0; i < newGates.length; i++) {
+    gates.push(newGates[i]);
+  }
+}
+
+function pausePlayTime() {
+  if (ticksPaused) {
+    updateTimeSpeed();
+    ticksPaused = false;
+  } else {
+    clearInterval(tickInterval);
+    ticksPaused = true;
+  }
+}
+function updateTimeSpeed() {
+  clearInterval(tickInterval);
+  tickInterval = setInterval(fullTick, 1000/tickRate);
+}
+function slowTime() {
+  tickRate = tickRate/timeSpeedFactor;
+  if (tickRate < 1) {
+    tickRate = 1;
+  }
+  updateTimeSpeed();
+}
+function speedTime() {
+  tickRate = tickRate*timeSpeedFactor;
+  if (tickRate > 160) {
+    tickRate = 160;
+  }
+  updateTimeSpeed();
+}
 
 function setup() { // p5.js setup
   createCanvas(xScreenSize, yScreenSize); // make new canvas to draw on
   noSmooth();
+  strokeCap(SQUARE)
   typesI = [loadImage('gateImages/AND.png'), loadImage('gateImages/OR.png'), loadImage('gateImages/NAND.png'), loadImage('gateImages/NOR.png'), loadImage('gateImages/XOR.png'), loadImage('gateImages/NXOR.png'), loadImage('gateImages/hollow.png'), loadImage('gateImages/button.png'), loadImage('gateImages/switch.png')]; // list tat stores all gate types with images.
   for (var i = 0; i < 10; i++) {
     gates.push(new gate( round(random(-4,4))*gateSize, round(random(-4,4))*gateSize, i%typesI.length, false));
@@ -538,7 +625,9 @@ function setup() { // p5.js setup
     connections.push(new connection(floor(random(gates.length)), floor(random(gates.length))));
   }
   doBackup();
-  addPopup('press T for a tutorial, click anywhere to close this message.')
+  addPopup('press T for a tutorial, click anywhere to close this message.');
+  pausePlayTime();
+  frameRate(30);
 }
 
 var Wmouse = [0,0];
@@ -547,17 +636,21 @@ function draw() { // main loop
   Wmouse = onWorldMouse();
   backupWasDone = false;
 
-  ticksToBeDone += ticksPerFrame;
-  while (ticksToBeDone >= 1) {
-    fullTick();
-    ticksToBeDone -= 1;
-  }
+  // ticksToBeDone += ticksPerFrame;
+  // while (ticksToBeDone >= 1) {
+  //   fullTick();
+  //   ticksToBeDone -= 1;
+  // }
 
   background(0); // set backgroun / delete old drawing
 
   translate((xScreenSize/2),(yScreenSize/2));
   scale(viewZoom);
   translate(viewX,viewY);
+
+  if (mouseIsPressed && isPressingGate()[0]) {
+    gates[isPressingGate()[1]].gotPressed = true;
+  }
 
   renderAll();
 
@@ -575,9 +668,10 @@ function draw() { // main loop
     rect(round(Wmouse[0]/gateSize)*gateSize, round(Wmouse[1]/gateSize)*gateSize, gateSize, gateSize);
   }
 
-  translate(-viewX,-viewY);
-  scale(1/viewZoom);
-  translate(-(xScreenSize/2),-(yScreenSize/2));
+  // translate(-viewX,-viewY);
+  // scale(1/viewZoom);
+  // translate(-(xScreenSize/2),-(yScreenSize/2));
+  resetMatrix();
 
   // menu interface
   for (var i = popups.length-1; i >= 0; i--) {
