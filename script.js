@@ -1,6 +1,6 @@
 var xScreenSize = innerWidth; // canvas size
 var yScreenSize = innerHeight;
-var version = 'Beta 0.5';
+var version = 'Beta 0.5.1';
 var gateSize = 100;
 var connectionsVisible = true;
 var connectionOpacity = 127;
