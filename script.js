@@ -496,8 +496,8 @@ function tutorial() {
   addPopup('Press C to copy all selected gates and connections between selected gates.');
   addPopup('Press O to show/hide the connections.');
   addPopup('Press R to rotate all selected gates 90 degrees clockwise or press T to view this tutorial again.');
-  addPopup('This is version ' + version + ', changes and improvements are happening all the time.');
-  addPopup('More features like the ability to share curcuits or have multipole saves are coming soon.');
+  addPopup('This is version ' + version + ', changes and improvements are happening all the time™.');
+  addPopup('More features like the ability to share curcuits or have multiple saves are coming soon.');
   addPopup('This program was made by: CodeMaker4');
 }
 function checkMovingPossible(gateToBechecked, xMovement, yMovement) {
